@@ -11,3 +11,12 @@ export const announcementRoutes = new Elysia({ prefix: '/apiv2' })
       return []
     }
   })
+  .get('/announcements.json', async () => {
+    try {
+      const result = await AnnouncementService.getAnnouncements()
+      return result
+    } catch (error) {
+      console.error('获取公告失败:', error)
+      return []
+    }
+  })
