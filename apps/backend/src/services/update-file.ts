@@ -2,6 +2,7 @@ import crypto from "crypto";
 import fs from "fs/promises";
 import path from "path";
 import { spawn } from "child_process";
+import AdmZip from "adm-zip";
 import prisma from "./db";
 import type { Prisma } from "../../generated/prisma/client";
 import { storageService } from "./object-storage";
@@ -137,8 +138,7 @@ function buildUpdateStorageKey(params: {
   originalName: string;
 }) {
   const safeFileName = storageService.sanitizeKeyPart(params.fileName);
-  const safeOriginalName = storageService.sanitizeKeyPart(params.originalName);
-  return `updates/${params.channel}/${safeFileName}/${params.versionCode}-${params.sha256.slice(0, 16)}-${safeOriginalName}`;
+  return `updates/${params.channel}/${safeFileName}/${params.versionCode}-${params.sha256.slice(0, 16)}/${params.sha256}.zip`;
 }
 
 function buildPatchStorageKey(params: {
@@ -479,6 +479,10 @@ export class UpdateService {
       originalName: input.file.name,
     });
 
+    const zip = new AdmZip();
+    zip.addFile("Plain Craft Launcher Community Edition.exe", fileBuffer);
+    const zipBuffer = zip.toBuffer();
+
     const existing = await prisma.updateFile.findFirst({
       where: {
         channel: channelMap[channel],
@@ -487,8 +491,8 @@ export class UpdateService {
     });
     if (existing) throw new Error("Update file already exists");
 
-    const stored = await storageService.uploadBuffer(s3Key, fileBuffer, {
-      contentType: input.file.type || "application/octet-stream",
+    const stored = await storageService.uploadBuffer(s3Key, zipBuffer, {
+      contentType: "application/zip",
     });
 
     const updateFile = await prisma.updateFile.create({
@@ -669,6 +673,34 @@ export class UpdateService {
     const targetPath = storageService.getLocalPath(job.updateFile.s3Key);
 
     await ensureTempRoot();
+
+    // Extract EXEs from the zips to compute patches
+    const sourceExePath = path.join(tempRoot, `source-${source.id}-${Date.now()}.exe`);
+    const targetExePath = path.join(tempRoot, `target-${job.updateFile.id}-${Date.now()}.exe`);
+    
+    try {
+      const sourceZip = new AdmZip(sourcePath);
+      const sourceExe = sourceZip.readFile("Plain Craft Launcher Community Edition.exe");
+      if (!sourceExe) throw new Error("Invalid source zip: missing executable");
+      await fs.writeFile(sourceExePath, sourceExe);
+
+      const targetZip = new AdmZip(targetPath);
+      const targetExe = targetZip.readFile("Plain Craft Launcher Community Edition.exe");
+      if (!targetExe) throw new Error("Invalid target zip: missing executable");
+      await fs.writeFile(targetExePath, targetExe);
+    } catch (error) {
+      await prisma.patchJobQueue.update({
+        where: { id: job.id },
+        data: {
+          status: PatchJobStatus.FAILED,
+          errorMessage: error instanceof Error ? error.message : String(error),
+          startedAt: job.startedAt ?? new Date(),
+          completedAt: new Date(),
+        },
+      });
+      return;
+    }
+
     const patchPath = path.join(
       tempRoot,
       `${source.id}-${job.updateFile.id}-${Date.now()}.patch`,
@@ -683,7 +715,7 @@ export class UpdateService {
     });
 
     try {
-      await runBsdiff(sourcePath, targetPath, patchPath);
+      await runBsdiff(sourceExePath, targetExePath, patchPath);
 
       const patchBuffer = await fs.readFile(patchPath);
       const patchSha256 = hashBuffer(patchBuffer);
@@ -735,10 +767,27 @@ export class UpdateService {
       throw error;
     } finally {
       await fs.unlink(patchPath).catch(() => undefined);
+      await fs.unlink(sourceExePath).catch(() => undefined);
+      await fs.unlink(targetExePath).catch(() => undefined);
     }
   }
 
   // ── File Downloads ──────────────────────────────────────────────────────
+
+  static async getUpdateDownloadPath(id: string) {
+    const updateFile = await prisma.updateFile.findUnique({ where: { id } });
+    if (!updateFile) return null;
+    return storageService.getLocalPath(updateFile.s3Key);
+  }
+
+  static async getUpdateDownloadPathAndSha(id: string) {
+    const updateFile = await prisma.updateFile.findUnique({ where: { id } });
+    if (!updateFile) return null;
+    return {
+      filePath: storageService.getLocalPath(updateFile.s3Key),
+      sha256: updateFile.sha256,
+    };
+  }
 
   static async getUpdateRedirectUrl(id: string): Promise<string | null> {
     const updateFile = await prisma.updateFile.findUnique({ where: { id } });

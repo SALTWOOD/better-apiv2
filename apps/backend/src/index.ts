@@ -8,6 +8,15 @@ import { adminRoutes } from './routes/admin'
 import { prisma } from './services/db'
 
 const app = new Elysia()
+  .derive(() => ({
+    startTime: performance.now()
+  }))
+  // 在完成响应后输出详细日志
+  .onAfterHandle(({ request, startTime, set }) => {
+    const duration = (performance.now() - startTime).toFixed(2)
+    const status = set.status ?? 200
+    console.log(`[${new Date().toISOString()}] ${request.method} ${request.url} - ${status} (${duration}ms)`)
+  })
   .use(cors())
   .use(swagger({
     documentation: {

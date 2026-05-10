@@ -25,7 +25,7 @@ function getBaseUrl(request: Request): string {
 
 export const updateRoutes = new Elysia({ prefix: '/apiv2' })
   // ── v2 API: /apiv2/updates/cache.json ──────────────────────────────────
-  .get('/updates/cache.json', async ({ request }) => {
+  .get('/cache.json', async ({ request }) => {
     try {
       return await UpdateService.computeCache(getBaseUrl(request))
     } catch (error) {
@@ -76,12 +76,27 @@ export const updateRoutes = new Elysia({ prefix: '/apiv2' })
   .get('/updates/:id/download', async ({ params, set }) => {
     try {
       const redirectUrl = await UpdateService.getUpdateRedirectUrl(params.id)
-      if (!redirectUrl) {
-        set.status = 404
-        return { success: false, error: '更新文件不存在或没有可用的下载源' }
+      if (redirectUrl) {
+        return Response.redirect(redirectUrl, 302)
       }
 
-      return Response.redirect(redirectUrl, 302)
+      // fallback to local file download
+      const { filePath, sha256 } = (await UpdateService.getUpdateDownloadPathAndSha(params.id)) ?? {};
+      if (!filePath || !sha256) {
+        set.status = 404
+        return { success: false, error: '更新文件不存在' }
+      }
+
+      const file = Bun.file(filePath)
+      if (!(await file.exists())) {
+        set.status = 404
+        return { success: false, error: '更新文件不存在' }
+      }
+
+      // the stored file is already a zip file containing the updated exe
+      set.headers['content-type'] = 'application/zip'
+      set.headers['content-disposition'] = `attachment; filename="${sha256}.zip"`
+      return new Response(file)
     } catch (error) {
       console.error('下载更新文件失败:', error)
       set.status = 500
