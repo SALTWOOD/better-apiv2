@@ -1,0 +1,178 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum VersionChannel {
+  FRARM64
+  FRX64
+  SRARM64
+  SRX64
+}
+
+enum ButtonCommand {
+  OPEN_URL
+  OPEN_WEBPAGE
+}
+
+enum PatchJobStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+}
+
+model Announcement {
+  id        String   @id @default(uuid())
+  title     String
+  detail    String
+  details   String?  @db.Text
+  priority  Int      @default(0)
+  level     Int      @default(0)
+  skip      String?  @db.Text
+  buttons   String?  @db.Text
+  date      DateTime
+  button1   AnnouncementButton? @relation("AnnouncementButton1")
+  button2   AnnouncementButton? @relation("AnnouncementButton2")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("announcements")
+}
+
+model AnnouncementButton {
+  id                String   @id @default(uuid())
+  text              String
+  command           ButtonCommand
+  commandParameter  String
+  announcementId1   String?  @unique
+  announcementId2   String?  @unique
+
+  announcement1 Announcement? @relation("AnnouncementButton1", fields: [announcementId1], references: [id], onDelete: Cascade)
+  announcement2 Announcement? @relation("AnnouncementButton2", fields: [announcementId2], references: [id], onDelete: Cascade)
+
+  @@map("announcement_buttons")
+}
+
+model UpdateFile {
+  id              String           @id @default(uuid()) @unique
+  fileName        String           
+  channel         VersionChannel
+  versionName     String
+  versionCode     Int              
+  originalName    String
+  fileSize        Int
+  sha256          String           
+  s3Key           String           @unique
+  s3Url           String
+  sourceGroup     String?
+  changelog       String           @db.Text
+  uploadedByAdmin String
+  uploadedAt      DateTime         @default(now())
+
+  patchJobs        PatchJobQueue[]
+  generatedPatches PatchFile[]      @relation("ToUpdateFile")
+  sourcePatches    PatchFile[]      @relation("FromUpdateFile")
+
+  @@index([channel])
+  @@index([versionCode])
+  @@index([sha256])
+  @@map("update_files")
+}
+
+model PatchFile {
+  id               String      @id @default(uuid())
+  fromUpdateFileId  String
+  toUpdateFileId    String
+  patchFileSize     Int
+  patchSha256       String      
+  s3Key       String      @unique
+  s3Url             String
+  createdAt         DateTime    @default(now())
+
+  fromUpdateFile UpdateFile @relation("FromUpdateFile", fields: [fromUpdateFileId], references: [id], onDelete: Cascade)
+  toUpdateFile   UpdateFile @relation("ToUpdateFile", fields: [toUpdateFileId], references: [id], onDelete: Cascade)
+
+  @@unique([fromUpdateFileId, toUpdateFileId])
+  @@index([fromUpdateFileId])
+  @@index([toUpdateFileId])
+  @@map("patch_files")
+}
+
+model PatchJobQueue {
+  id                String         @id @default(uuid())
+  updateFileId      String
+  status            PatchJobStatus @default(PENDING)
+  sourceVersionCode Int
+  targetVersionCode Int
+  errorMessage      String?        @db.Text
+  createdAt         DateTime       @default(now())
+  startedAt         DateTime?
+  completedAt       DateTime?
+
+  updateFile UpdateFile @relation(fields: [updateFileId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([updateFileId])
+  @@map("patch_job_queues")
+}
+
+model Cache {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String   @db.Text
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+
+  @@map("caches")
+}
+
+model ReleaseSource {
+  id        String   @id @default(uuid())
+  name      String
+  baseUrl   String
+  groupName String
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([name, groupName])
+  @@index([groupName])
+  @@map("release_sources")
+}
+
+model AdminUser {
+  id           String         @id @default(uuid())
+  githubId     String         @unique
+  login        String         @unique
+  name         String?
+  avatarUrl    String?
+  isTeamMember Boolean        @default(false)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  sessions     AdminSession[]
+
+  @@map("admin_users")
+}
+
+model AdminSession {
+  id        String    @id @default(uuid())
+  token     String    @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+  user      AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([expiresAt])
+  @@map("admin_sessions")
+}

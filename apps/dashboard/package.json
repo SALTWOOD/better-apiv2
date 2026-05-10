@@ -1,0 +1,41 @@
+{
+  "name": "better-apiv2-dashboard",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@elysiajs/eden": "^1.4.9",
+    "@fontsource-variable/google-sans": "^5.2.1",
+    "@iconify-json/material-symbols": "^1.2.69",
+    "@iconify-json/mdi": "^1.2.3",
+    "@mdui/icons": "^1.0.3",
+    "@mdui/mcp": "^2.1.0",
+    "@unhead/vue": "^3.1.0",
+    "@vueuse/core": "^14.3.0",
+    "better-apiv2-backend": "workspace:*",
+    "markdown-it": "^14.1.1",
+    "mdui": "^2.1.4",
+    "pinia": "^2.1.7",
+    "vue": "^3.5.32",
+    "vue-router": "^4.3.3"
+  },
+  "devDependencies": {
+    "@types/markdown-it": "^14.1.2",
+    "@types/node": "^24.12.2",
+    "@unocss/preset-icons": "^66.6.8",
+    "@unocss/preset-wind": "^66.6.8",
+    "@unocss/transformer-directives": "^66.6.8",
+    "@vitejs/plugin-vue": "^6.0.6",
+    "@vue/tsconfig": "^0.9.1",
+    "typescript": "~6.0.2",
+    "unocss": "^66.6.8",
+    "vite": "^8.0.10",
+    "vue-tsc": "^3.2.7"
+  }
+}

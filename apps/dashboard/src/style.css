@@ -1,0 +1,12 @@
+body {
+  font-family: 'Google Sans Variable', sans-serif;
+  margin: 0;
+}
+
+html {
+  width: auto !important;
+}
+
+:not(:defined) {
+  visibility: hidden;
+}

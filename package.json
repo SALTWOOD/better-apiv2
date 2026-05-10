@@ -1,0 +1,32 @@
+{
+  "name": "better-apiv2",
+  "version": "2.0.0",
+  "scripts": {
+    "dev:api": "pnpm --filter better-apiv2-backend exec bun --watch src/index.ts",
+    "dev:dashboard": "pnpm --filter better-apiv2-dashboard run dev",
+    "dev": "pnpm run dev:api & pnpm run dev:dashboard",
+    "build:api": "pnpm --filter better-apiv2-backend exec bun build src/index.ts --target bun --outfile dist/index.js",
+    "build:dashboard": "pnpm --filter better-apiv2-dashboard run build",
+    "build": "pnpm run build:api && pnpm run build:dashboard",
+    "prisma:generate": "pnpm --filter better-apiv2-backend run prisma:generate",
+    "db:migrate": "pnpm --filter better-apiv2-backend run db:migrate",
+    "db:reset": "pnpm --filter better-apiv2-backend run db:reset",
+    "db:push": "pnpm --filter better-apiv2-backend run db:push"
+  },
+  "keywords": [
+    "pcl",
+    "minecraft",
+    "launcher",
+    "api",
+    "elysia",
+    "typescript",
+    "prisma"
+  ],
+  "author": "PCL-Community",
+  "license": "MIT",
+  "packageManager": "pnpm@10.22.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PCL-Community/better-apiv2"
+  }
+}
