@@ -123,10 +123,12 @@ const router = useRouter()
 const authStore = useAuthStore()
 
 const isLargeScreen = useMediaQuery('(min-width: 1024px)')
-const isDrawerOpen = ref(isLargeScreen.value)
+const isDrawerOpen = ref(false)
 
 watch(isLargeScreen, (newVal) => {
-  isDrawerOpen.value = newVal
+  if (newVal) {
+    isDrawerOpen.value = false
+  }
 })
 
 watch(() => router.currentRoute.value.path, () => {
