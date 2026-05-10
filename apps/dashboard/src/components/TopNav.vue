@@ -1,43 +1,60 @@
 <template>
-  <mdui-top-app-bar scroll-behavior="elevate">
-    <mdui-button-icon @click="toggleDrawer" class="lg:hidden">
-      <mdui-icon-menu></mdui-icon-menu>
-    </mdui-button-icon>
-    <mdui-top-app-bar-title class="hidden lg:inline lg:ml-4">
-      PCL CE 管理后台
-    </mdui-top-app-bar-title>
-    <mdui-top-app-bar-title class="block lg:hidden">
-      管理后台
-    </mdui-top-app-bar-title>
-    <div style="flex-grow: 1"></div>
-    <mdui-button-icon @click="toggleDark()" class="mr-2">
-      <mdui-icon-brightness-4></mdui-icon-brightness-4>
-    </mdui-button-icon>
-    <mdui-dropdown v-if="authStore.isAuthenticated">
-      <mdui-avatar slot="trigger" :src="authStore.user?.avatarUrl"></mdui-avatar>
-      <mdui-menu>
-        <mdui-menu-item disabled class="text-sm">
-          目前登录的身份：{{ authStore.user?.login }}
-        </mdui-menu-item>
-        <mdui-divider></mdui-divider>
-        <mdui-menu-item @click="handleLogout">
-          <mdui-icon-logout slot="icon"></mdui-icon-logout>
-          退出登录
-        </mdui-menu-item>
-      </mdui-menu>
-    </mdui-dropdown>
-  </mdui-top-app-bar>
+  <header
+    class="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+  >
+    <div class="flex h-14 items-center px-4 gap-2">
+      <Button variant="ghost" size="icon" class="lg:hidden" @click="toggleDrawer">
+        <Menu class="size-5" />
+      </Button>
+      <span class="hidden lg:inline lg:ml-4 font-semibold text-lg">PCL CE 管理后台</span>
+      <span class="block lg:hidden font-semibold text-lg">管理后台</span>
+      <div class="flex-1" />
+      <Button variant="ghost" size="icon" class="mr-2" @click="toggleDark()">
+        <Sun v-if="isDark" class="size-5" />
+        <Moon v-else class="size-5" />
+      </Button>
+      <DropdownMenu v-if="authStore.isAuthenticated">
+        <DropdownMenuTrigger as-child>
+          <Button variant="ghost" size="icon" class="rounded-full">
+            <Avatar>
+              <AvatarImage :src="authStore.user?.avatarUrl ?? ''" :alt="authStore.user?.login ?? ''" />
+              <AvatarFallback>{{ authStore.user?.login?.charAt(0)?.toUpperCase() ?? '?' }}</AvatarFallback>
+            </Avatar>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" class="w-56">
+          <DropdownMenuLabel class="font-normal">
+            <div class="flex flex-col space-y-1">
+              <p class="text-sm font-medium leading-none">目前登录的身份</p>
+              <p class="text-xs leading-none text-muted-foreground">{{ authStore.user?.login }}</p>
+            </div>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem @click="handleLogout" class="cursor-pointer">
+            <LogOut class="mr-2 size-4" />
+            退出登录
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  </header>
 </template>
 
 <script setup lang="ts">
 import { isClient, useDark, useToggle } from '@vueuse/core'
-import { setTheme } from 'mdui/functions/setTheme.js'
 import { useAuthStore } from '../stores/auth'
 import { logout } from '../services/api'
-
-import "@mdui/icons/menu"
-import "@mdui/icons/brightness-4"
-import "@mdui/icons/logout"
+import { Button } from '@/components/ui/button'
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu'
+import { Menu, Sun, Moon, LogOut } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
 
@@ -45,14 +62,8 @@ const emit = defineEmits<{
   toggleDrawer: []
 }>()
 
-const isDark = useDark({
-  onChanged: (isDark) => {
-    if (typeof document !== "undefined") setTheme(isDark ? "dark" : "light");
-  },
-  disableTransition: false, 
-});
-
-const toggleDark = useToggle(isDark);
+const isDark = useDark()
+const toggleDark = useToggle(isDark)
 
 function toggleDrawer() {
   emit('toggleDrawer')

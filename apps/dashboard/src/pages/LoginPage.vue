@@ -1,26 +1,25 @@
 <template>
   <div class="w-full min-h-screen flex items-center justify-center">
-    <mdui-card class="w-full max-w-md mdui-prose">
-      <div class="p-6">
+    <Card class="w-full max-w-md">
+      <CardContent class="p-6">
         <h2 class="text-2xl font-bold text-center">Better PCL CE</h2>
         <p class="text-center">使用 GitHub 账号登录</p>
 
-        <mdui-button
-          variant="filled"
-          full-width
+        <Button
+          class="w-full"
           @click="handleLogin"
-          :loading="loading"
           :disabled="loading"
         >
-          <span class="icon i-mdi-github" slot="icon"></span>
+          <Loader2 v-if="loading" class="mr-2 h-4 w-4 animate-spin" />
+          <Github v-else class="mr-2" :size="18" />
           用 GitHub 登录
-        </mdui-button>
+        </Button>
 
         <p class="text-center text-sm text-gray-500">
           该应用仅供 PCL Community 核心成员使用
         </p>
-      </div>
-    </mdui-card>
+      </CardContent>
+    </Card>
   </div>
 </template>
 
@@ -28,6 +27,9 @@
 import { ref } from "vue";
 import { isClient } from "@vueuse/core";
 import { useHead } from "@unhead/vue";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Github, Loader2 } from "lucide-vue-next";
 
 useHead({
   title: "登录",

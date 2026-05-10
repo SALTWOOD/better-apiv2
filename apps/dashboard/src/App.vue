@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { setTheme } from 'mdui/functions/setTheme.js'
-import { setColorScheme } from 'mdui'
 import { useDark } from '@vueuse/core'
+import { Toaster } from '@/components/ui/sonner'
 
-import "mdui/mdui.css"
 import "@fontsource-variable/google-sans/wght.css"
 import { useHead } from '@unhead/vue'
 
@@ -15,14 +13,12 @@ useHead({
   }
 })
 
-// 初始化主题
-setColorScheme('#0067db')
-const isDark = useDark()
+// VueUse dark mode — toggles `dark` class on <html>
+useDark()
 
 const loading = ref(true)
 
 onMounted(() => {
-  setTheme(isDark.value ? 'dark' : 'light')
   // 页面初始挂载后短暂展示加载条
   setTimeout(() => (loading.value = false), 200)
 })
@@ -43,6 +39,23 @@ router.onError(() => {
 </script>
 
 <template>
-  <mdui-linear-progress v-show="loading" class="app-top-progress fixed top-0 left-0 right-0 z-9999 h-1" indeterminate></mdui-linear-progress>
+  <div v-show="loading" class="fixed top-0 left-0 right-0 z-50 h-1 bg-primary/20 overflow-hidden">
+    <div class="h-full bg-primary animate-indeterminate-progress"></div>
+  </div>
+  <Toaster rich-colors position="top-center" />
   <RouterView />
 </template>
+
+<style>
+@keyframes indeterminate-progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+.animate-indeterminate-progress {
+  animation: indeterminate-progress 1.2s ease-in-out infinite;
+}
+</style>

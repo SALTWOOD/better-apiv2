@@ -1,9 +1,9 @@
 <template>
-  <div class="min-h-screen flex flex-col bg-[var(--mdui-color-surface)]">
+  <div class="min-h-screen flex flex-col bg-background">
     <TopNav @toggle-drawer="sideNav?.toggleDrawer()" />
     <SideNav ref="sideNav" />
-    <main class="flex-1 w-full">
-      <div class="p-4 lg:p-8 max-w-230 mx-auto">
+    <main class="flex-1 w-full lg:pl-64">
+      <div class="p-4 lg:p-8 max-w-[57.5rem] mx-auto">
         <router-view />
       </div>
       <BackToTop />

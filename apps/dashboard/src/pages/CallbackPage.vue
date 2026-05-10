@@ -1,22 +1,24 @@
 <template>
   <div class="w-full min-h-screen flex items-center justify-center">
-    <mdui-card class="w-full max-w-md p-6 mdui-prose">
-      <div v-if="loading" class="flex flex-col items-center">
-        <mdui-circular-progress indeterminate></mdui-circular-progress>
-        <p class="text-sm text-gray-500">正在完成 GitHub 登录...</p>
-      </div>
-
-      <div v-else-if="error" class="text-center space-y-6">
-        <div class="space-y-2 mdui-prose">
-          <h2>登录失败</h2>
-          <p>{{ errorMessage }}</p>
+    <Card class="w-full max-w-md">
+      <CardContent class="p-6">
+        <div v-if="loading" class="flex flex-col items-center">
+          <div class="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          <p class="text-sm text-gray-500">正在完成 GitHub 登录...</p>
         </div>
 
-        <mdui-button variant="filled" full-width @click="goToLogin">
-          返回登录页
-        </mdui-button>
-      </div>
-    </mdui-card>
+        <div v-else-if="error" class="text-center space-y-6">
+          <div class="space-y-2">
+            <h2 class="text-xl font-semibold">登录失败</h2>
+            <p class="text-muted-foreground">{{ errorMessage }}</p>
+          </div>
+
+          <Button class="w-full" @click="goToLogin">
+            返回登录页
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   </div>
 </template>
 
@@ -27,6 +29,8 @@ import { api, getAuthRequestOptions } from "../services/api";
 import { useAuthStore } from "../stores/auth";
 import { isClient } from "@vueuse/core";
 import { useHead } from "@unhead/vue";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 useHead({
   title: "登录",

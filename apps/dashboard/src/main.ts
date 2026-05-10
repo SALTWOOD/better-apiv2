@@ -1,8 +1,6 @@
 import { createApp } from "vue";
 import { createPinia } from "pinia";
 import { createHead } from '@unhead/vue/client'
-import "uno.css";
-import "mdui";
 import "./style.css";
 import App from "./App.vue";
 import router from "./router";
@@ -22,7 +20,7 @@ const authStore = useAuthStore(pinia);
 if (authStore.token) {
   api.admin.me
     .get(getAuthRequestOptions(authStore.token))
-    .then((res: any) => {
+    .then((res) => {
       if (res.error || res.status === 401) {
         authStore.logout();
         if (isClient) {
@@ -31,9 +29,10 @@ if (authStore.token) {
         return;
       }
       
-      const user =
-        res && res.user ? res.user : res && res.data ? res.data.user : null;
-      if (user) authStore.setUser(user);
+      // Eden client response shape varies; extract user from possible response shapes
+      const data = res as { user?: Record<string, unknown>; data?: { user?: Record<string, unknown> } };
+      const user = data.user ?? data.data?.user ?? null;
+      if (user) authStore.setUser(user as unknown as Parameters<typeof authStore.setUser>[0]);
     })
     .catch(() => {
       authStore.logout();

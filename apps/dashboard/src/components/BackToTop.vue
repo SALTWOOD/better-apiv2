@@ -1,9 +1,9 @@
 <template>
   <transition name="fab-slide">
     <div v-if="showFab" class="fab-wrapper fixed bottom-8 right-8">
-      <mdui-fab class="fab-el" @click="scrollToTop">
-        <mdui-icon-arrow-upward slot="icon"></mdui-icon-arrow-upward>
-      </mdui-fab>
+      <Button size="icon" class="rounded-full size-12 shadow-lg" @click="scrollToTop" aria-label="回到顶部">
+        <ArrowUp :size="20" />
+      </Button>
     </div>
   </transition>
 </template>
@@ -11,7 +11,8 @@
 <script setup lang="ts">
 import { useWindowScroll, isClient } from '@vueuse/core'
 import { computed } from 'vue'
-import "@mdui/icons/arrow-upward"
+import { Button } from '@/components/ui/button'
+import { ArrowUp } from 'lucide-vue-next'
 
 const props = defineProps<{ threshold?: number }>()
 const threshold = props.threshold ?? 100
